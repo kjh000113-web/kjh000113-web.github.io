@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>kjh000113-web | Home</title>
+    <meta
+      name="description"
+      content="kjh000113-web의 개인 홈페이지입니다."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top">kjh000113-web</a>
+      <nav class="nav" aria-label="주요 메뉴">
+        <a href="#about">소개</a>
+        <a href="#projects">프로젝트</a>
+        <a href="#contact">연락</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__content">
+          <p class="eyebrow">Personal Website</p>
+          <h1 id="hero-title">안녕하세요, 나만의 웹 공간입니다.</h1>
+          <p class="hero__lead">
+            관심 있는 것, 만들어 가는 프로젝트, 그리고 나를 소개하는 내용을
+            차분하게 담아낼 수 있는 홈페이지입니다.
+          </p>
+          <div class="hero__actions">
+            <a class="button button--primary" href="#projects">프로젝트 보기</a>
+            <a class="button button--secondary" href="#contact">연락하기</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="section">
+        <div class="section__header">
+          <p class="eyebrow">About</p>
+          <h2>소개</h2>
+        </div>
+        <p class="section__text">
+          이곳에는 자기소개, 관심 분야, 공부하고 있는 기술, 앞으로 만들고 싶은
+          것들을 적을 수 있습니다. 문장은 언제든지 바꿀 수 있어요.
+        </p>
+      </section>
+
+      <section id="projects" class="section section--muted">
+        <div class="section__header">
+          <p class="eyebrow">Projects</p>
+          <h2>프로젝트</h2>
+        </div>
+        <div class="project-grid">
+          <article class="project-card">
+            <h3>첫 번째 프로젝트</h3>
+            <p>간단한 설명을 적어 두는 공간입니다.</p>
+          </article>
+          <article class="project-card">
+            <h3>두 번째 프로젝트</h3>
+            <p>GitHub 저장소나 결과물 링크를 연결할 수 있습니다.</p>
+          </article>
+          <article class="project-card">
+            <h3>세 번째 프로젝트</h3>
+            <p>배운 것과 시도한 것을 기록해 보세요.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="contact" class="section">
+        <div class="section__header">
+          <p class="eyebrow">Contact</p>
+          <h2>연락</h2>
+        </div>
+        <p class="section__text">
+          GitHub:
+          <a href="https://github.com/kjh000113-web">github.com/kjh000113-web</a>
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© <span id="year"></span> kjh000113-web. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
