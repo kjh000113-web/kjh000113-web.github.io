@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>kjh000113-web | Home</title>
+    <title>kjh000113-web | Board</title>
     <meta
       name="description"
-      content="kjh000113-web의 개인 홈페이지입니다."
+      content="kjh000113-web의 개인 게시판형 홈페이지입니다."
     />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -14,74 +14,130 @@
     <header class="site-header">
       <a class="brand" href="#top">kjh000113-web</a>
       <nav class="nav" aria-label="주요 메뉴">
-        <a href="#about">소개</a>
-        <a href="#projects">프로젝트</a>
-        <a href="#contact">연락</a>
+        <a href="#board">게시판</a>
+        <a href="#write">글쓰기</a>
+        <a href="#profile">소개</a>
       </nav>
     </header>
 
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero__content">
-          <p class="eyebrow">Personal Website</p>
-          <h1 id="hero-title">안녕하세요, 나만의 웹 공간입니다.</h1>
+          <p class="eyebrow">Personal Board</p>
+          <h1 id="hero-title">기록을 남기는 나만의 게시판</h1>
           <p class="hero__lead">
-            관심 있는 것, 만들어 가는 프로젝트, 그리고 나를 소개하는 내용을
-            차분하게 담아낼 수 있는 홈페이지입니다.
+            공지, 일상, 공부 기록, 프로젝트 메모를 한곳에 모아두는 개인
+            홈페이지입니다.
           </p>
           <div class="hero__actions">
-            <a class="button button--primary" href="#projects">프로젝트 보기</a>
-            <a class="button button--secondary" href="#contact">연락하기</a>
+            <a class="button button--primary" href="#write">새 글 쓰기</a>
+            <a class="button button--secondary" href="#board">글 목록 보기</a>
           </div>
         </div>
       </section>
 
-      <section id="about" class="section">
-        <div class="section__header">
-          <p class="eyebrow">About</p>
-          <h2>소개</h2>
+      <section id="board" class="board-section" aria-labelledby="board-title">
+        <div class="section-header">
+          <p class="eyebrow">Board</p>
+          <h2 id="board-title">게시글</h2>
         </div>
-        <p class="section__text">
-          이곳에는 자기소개, 관심 분야, 공부하고 있는 기술, 앞으로 만들고 싶은
-          것들을 적을 수 있습니다. 문장은 언제든지 바꿀 수 있어요.
-        </p>
+
+        <div class="board-tools" aria-label="게시글 도구">
+          <label class="search-field">
+            <span>검색</span>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="제목이나 내용을 검색하세요"
+            />
+          </label>
+
+          <div class="category-tabs" aria-label="카테고리 필터">
+            <button class="tab is-active" type="button" data-category="all">
+              전체
+            </button>
+            <button class="tab" type="button" data-category="notice">공지</button>
+            <button class="tab" type="button" data-category="daily">일상</button>
+            <button class="tab" type="button" data-category="study">공부</button>
+            <button class="tab" type="button" data-category="project">
+              프로젝트
+            </button>
+          </div>
+        </div>
+
+        <div id="postList" class="post-list" aria-live="polite"></div>
       </section>
 
-      <section id="projects" class="section section--muted">
-        <div class="section__header">
-          <p class="eyebrow">Projects</p>
-          <h2>프로젝트</h2>
+      <section id="write" class="write-section" aria-labelledby="write-title">
+        <div class="section-header">
+          <p class="eyebrow">Write</p>
+          <h2 id="write-title">글쓰기</h2>
         </div>
-        <div class="project-grid">
-          <article class="project-card">
-            <h3>첫 번째 프로젝트</h3>
-            <p>간단한 설명을 적어 두는 공간입니다.</p>
-          </article>
-          <article class="project-card">
-            <h3>두 번째 프로젝트</h3>
-            <p>GitHub 저장소나 결과물 링크를 연결할 수 있습니다.</p>
-          </article>
-          <article class="project-card">
-            <h3>세 번째 프로젝트</h3>
-            <p>배운 것과 시도한 것을 기록해 보세요.</p>
-          </article>
-        </div>
+
+        <form id="postForm" class="post-form">
+          <div class="form-grid">
+            <label>
+              <span>제목</span>
+              <input
+                id="titleInput"
+                name="title"
+                type="text"
+                maxlength="60"
+                required
+                placeholder="게시글 제목"
+              />
+            </label>
+
+            <label>
+              <span>분류</span>
+              <select id="categoryInput" name="category">
+                <option value="notice">공지</option>
+                <option value="daily">일상</option>
+                <option value="study">공부</option>
+                <option value="project">프로젝트</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>내용</span>
+            <textarea
+              id="bodyInput"
+              name="body"
+              rows="7"
+              maxlength="800"
+              required
+              placeholder="오늘 남기고 싶은 이야기를 적어보세요."
+            ></textarea>
+          </label>
+
+          <div class="form-actions">
+            <p class="save-note">
+              지금 버전은 브라우저에 저장됩니다. GitHub Pages에 올려도 바로
+              사용할 수 있어요.
+            </p>
+            <button class="button button--primary" type="submit">등록</button>
+          </div>
+        </form>
       </section>
 
-      <section id="contact" class="section">
-        <div class="section__header">
-          <p class="eyebrow">Contact</p>
-          <h2>연락</h2>
+      <section id="profile" class="profile-section" aria-labelledby="profile-title">
+        <div class="section-header">
+          <p class="eyebrow">Profile</p>
+          <h2 id="profile-title">소개</h2>
         </div>
-        <p class="section__text">
-          GitHub:
-          <a href="https://github.com/kjh000113-web">github.com/kjh000113-web</a>
+        <p>
+          이 게시판은 생각과 작업 기록을 차곡차곡 쌓기 위한 개인 공간입니다.
+          내용은 언제든지 수정해서 더 나답게 만들 수 있습니다.
         </p>
+        <a class="profile-link" href="https://github.com/kjh000113-web">
+          GitHub에서 보기
+        </a>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p>© <span id="year"></span> kjh000113-web. All rights reserved.</p>
+      <p>© <span id="year"></span> kjh000113-web</p>
     </footer>
 
     <script src="script.js"></script>
