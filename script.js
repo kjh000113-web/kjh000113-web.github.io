@@ -117,8 +117,6 @@ const defaultState = {
 };
 
 const pointBalance = document.querySelector("#pointBalance");
-const holdingCount = document.querySelector("#holdingCount");
-const averageAffinity = document.querySelector("#averageAffinity");
 const collectionSlider = document.querySelector("#collectionSlider");
 const streakCount = document.querySelector("#streakCount");
 const attendanceMessage = document.querySelector("#attendanceMessage");
@@ -131,15 +129,21 @@ const manageList = document.querySelector("#manageList");
 const drawMachine = document.querySelector(".draw-machine");
 const tabButtons = document.querySelectorAll(".tab-button");
 const tabViews = document.querySelectorAll(".tab-view");
+const appShell = document.querySelector(".app-shell");
 
 let imageCatalog = {};
 let state = loadState();
+let sliderTimer = 0;
 normalizeState();
+appShell?.classList.add("is-home-active");
 init();
 
 attendanceButton?.addEventListener("click", checkAttendance);
 drawSectionList?.addEventListener("click", handleDrawClick);
 manageList?.addEventListener("click", handleManageClick);
+collectionSlider?.addEventListener("click", () => {
+  collectionSlider.classList.toggle("is-info-hidden");
+});
 
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -239,6 +243,9 @@ function switchTab(target) {
   tabButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.target === target);
   });
+
+  appShell?.classList.toggle("is-home-active", target === "home");
+  updateSliderAutoplay();
 }
 
 function checkAttendance() {
@@ -394,20 +401,6 @@ function renderStatus() {
     pointBalance.textContent = `${state.points.toLocaleString("ko-KR")}P`;
   }
 
-  if (holdingCount) {
-    holdingCount.textContent = `${holdings.length}개`;
-  }
-
-  if (averageAffinity) {
-    const average = holdings.length
-      ? Math.round(
-          holdings.reduce((sum, holding) => sum + getAffinity(holding), 0) /
-            holdings.length,
-        )
-      : 0;
-    averageAffinity.textContent = String(average);
-  }
-
   if (streakCount) {
     streakCount.textContent = String(state.streak);
   }
@@ -508,6 +501,7 @@ function renderHome() {
     .sort((a, b) => b.acquiredDate.localeCompare(a.acquiredDate))
     .map(createSlideMarkup)
     .join("");
+  updateSliderAutoplay();
 }
 
 function renderResults() {
@@ -699,6 +693,27 @@ function animateDraw() {
   window.setTimeout(() => {
     drawMachine.classList.remove("is-spinning");
   }, 750);
+}
+
+function updateSliderAutoplay() {
+  window.clearInterval(sliderTimer);
+
+  if (!collectionSlider || !document.querySelector(".home-view.is-active")) {
+    return;
+  }
+
+  const slides = collectionSlider.querySelectorAll(".slide-card");
+
+  if (slides.length <= 1) {
+    return;
+  }
+
+  sliderTimer = window.setInterval(() => {
+    const width = collectionSlider.clientWidth;
+    const currentIndex = Math.round(collectionSlider.scrollLeft / width);
+    const nextIndex = (currentIndex + 1) % slides.length;
+    collectionSlider.scrollTo({ left: nextIndex * width, behavior: "smooth" });
+  }, 4200);
 }
 
 function getRecentDays(count) {
