@@ -303,6 +303,7 @@ function createRandomCollection(tier, images, acquiredDate) {
     uid: crypto.randomUUID(),
     worldId: imageEntry.worldId,
     worldLabel: imageEntry.worldLabel,
+    job: imageEntry.job,
     tierId: tier.id,
     tierLabel: tier.label,
     name: createRandomName(imageEntry.worldId),
@@ -568,11 +569,12 @@ function createSlideMarkup(holding) {
           <span class="price-chip">${price.toLocaleString("ko-KR")}P</span>
           <span class="affinity-chip">호감도 ${affinity}</span>
         </div>
-        <div class="stat-row">
-          <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
-          <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
-          <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
-          <div class="stat-line"><span>오늘 판매가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
+      <div class="stat-row">
+        <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
+        <div class="stat-line"><span>직업</span><strong>${holding.job || "미정"}</strong></div>
+        <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
+        <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
+        <div class="stat-line"><span>오늘 판매가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
         </div>
       </div>
     </article>
@@ -586,7 +588,7 @@ function createResultMarkup(holding) {
         ${createRarityMarkup(holding.rarity)}
       </div>
       <h3>${holding.name}</h3>
-      <p class="helper-text">${holding.worldLabel} 세계관 컬렉션에 추가되었습니다.</p>
+      <p class="helper-text">${holding.worldLabel} · ${holding.job || "미정"} 컬렉션에 추가되었습니다.</p>
     </article>
   `;
 }
@@ -610,6 +612,7 @@ function createManageMarkup(holding) {
       </div>
       <div class="stat-row">
         <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
+        <div class="stat-line"><span>직업</span><strong>${holding.job || "미정"}</strong></div>
         <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
         <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
         <div class="stat-line"><span>오늘 주가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
@@ -652,8 +655,14 @@ function getAllImages() {
         src,
         worldId: world.id,
         worldLabel: world.label,
+        job: getJobFromImagePath(src),
       }));
   });
+}
+
+function getJobFromImagePath(src) {
+  const filename = src.split("/").pop() || "";
+  return filename.replace(/\.[^.]+$/, "");
 }
 
 function findWorld(worldId) {
