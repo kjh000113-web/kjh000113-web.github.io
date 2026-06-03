@@ -1,176 +1,319 @@
-const STORAGE_KEY = "kjh000113-board-posts";
+const STORAGE_KEY = "kjh000113-collection-game";
+const ATTENDANCE_REWARD = 100;
+const DRAW_ONCE_COST = 30;
+const DRAW_TEN_COST = 270;
 
-const categoryLabels = {
-  notice: "공지",
-  daily: "일상",
-  study: "공부",
-  project: "프로젝트",
-};
-
-const starterPosts = [
+const collectionItems = [
   {
-    id: "welcome",
-    title: "게시판에 오신 것을 환영합니다",
-    category: "notice",
-    body: "이곳은 공지, 일상, 공부 기록, 프로젝트 메모를 남기는 개인 게시판입니다.",
-    createdAt: "2026-06-01T09:00:00.000Z",
+    id: "star-shard",
+    name: "별 조각",
+    rarity: "common",
+    symbol: "S",
+    weight: 28,
   },
   {
-    id: "study-log",
-    title: "오늘의 공부 기록",
-    category: "study",
-    body: "배운 내용과 참고 링크를 짧게 정리해두면 나중에 다시 보기 좋습니다.",
-    createdAt: "2026-06-01T09:10:00.000Z",
+    id: "moon-ticket",
+    name: "달빛 티켓",
+    rarity: "common",
+    symbol: "M",
+    weight: 24,
   },
   {
-    id: "project-note",
-    title: "홈페이지 개선 아이디어",
-    category: "project",
-    body: "프로필 사진, 프로젝트 링크, 방명록 기능을 차례대로 추가해볼 수 있습니다.",
-    createdAt: "2026-06-01T09:20:00.000Z",
+    id: "green-pin",
+    name: "초록 배지",
+    rarity: "common",
+    symbol: "G",
+    weight: 20,
+  },
+  {
+    id: "blue-gem",
+    name: "푸른 보석",
+    rarity: "rare",
+    symbol: "B",
+    weight: 14,
+  },
+  {
+    id: "silver-key",
+    name: "은빛 열쇠",
+    rarity: "rare",
+    symbol: "K",
+    weight: 8,
+  },
+  {
+    id: "crystal-crown",
+    name: "수정 왕관",
+    rarity: "epic",
+    symbol: "C",
+    weight: 4,
+  },
+  {
+    id: "golden-sun",
+    name: "황금 태양",
+    rarity: "legendary",
+    symbol: "L",
+    weight: 2,
   },
 ];
 
-const yearElement = document.querySelector("#year");
-const postList = document.querySelector("#postList");
-const postForm = document.querySelector("#postForm");
-const searchInput = document.querySelector("#searchInput");
-const categoryButtons = document.querySelectorAll("[data-category]");
+const rarityLabels = {
+  common: "일반",
+  rare: "희귀",
+  epic: "에픽",
+  legendary: "전설",
+};
 
-let activeCategory = "all";
-let posts = loadPosts();
+const defaultState = {
+  points: 0,
+  lastAttendanceDate: "",
+  streak: 0,
+  owned: {},
+  recentResults: [],
+};
+
+const yearElement = document.querySelector("#year");
+const pointBalance = document.querySelector("#pointBalance");
+const streakCount = document.querySelector("#streakCount");
+const attendanceMessage = document.querySelector("#attendanceMessage");
+const attendanceButton = document.querySelector("#attendanceButton");
+const drawOnceButton = document.querySelector("#drawOnceButton");
+const drawTenButton = document.querySelector("#drawTenButton");
+const drawMessage = document.querySelector("#drawMessage");
+const resultList = document.querySelector("#resultList");
+const collectionGrid = document.querySelector("#collectionGrid");
+const completionText = document.querySelector("#completionText");
+const completionBar = document.querySelector("#completionBar");
+const drawMachine = document.querySelector(".draw-machine");
+
+let state = loadState();
 
 if (yearElement) {
   yearElement.textContent = new Date().getFullYear();
 }
 
-renderPosts();
+attendanceButton?.addEventListener("click", checkAttendance);
+drawOnceButton?.addEventListener("click", () => drawItems(1));
+drawTenButton?.addEventListener("click", () => drawItems(10));
 
-postForm?.addEventListener("submit", (event) => {
-  event.preventDefault();
+render();
 
-  const formData = new FormData(postForm);
-  const title = String(formData.get("title") || "").trim();
-  const body = String(formData.get("body") || "").trim();
-  const category = String(formData.get("category") || "daily");
+function loadState() {
+  const savedState = localStorage.getItem(STORAGE_KEY);
 
-  if (!title || !body) {
-    return;
-  }
-
-  posts = [
-    {
-      id: crypto.randomUUID(),
-      title,
-      category,
-      body,
-      createdAt: new Date().toISOString(),
-    },
-    ...posts,
-  ];
-
-  savePosts();
-  postForm.reset();
-  renderPosts();
-  document.querySelector("#board")?.scrollIntoView({ behavior: "smooth" });
-});
-
-searchInput?.addEventListener("input", renderPosts);
-
-categoryButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    activeCategory = button.dataset.category || "all";
-    categoryButtons.forEach((item) => item.classList.remove("is-active"));
-    button.classList.add("is-active");
-    renderPosts();
-  });
-});
-
-postList?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-delete-id]");
-
-  if (!button) {
-    return;
-  }
-
-  posts = posts.filter((post) => post.id !== button.dataset.deleteId);
-  savePosts();
-  renderPosts();
-});
-
-function loadPosts() {
-  const savedPosts = localStorage.getItem(STORAGE_KEY);
-
-  if (!savedPosts) {
-    return starterPosts;
+  if (!savedState) {
+    return { ...defaultState };
   }
 
   try {
-    const parsed = JSON.parse(savedPosts);
-    return Array.isArray(parsed) ? parsed : starterPosts;
+    return { ...defaultState, ...JSON.parse(savedState) };
   } catch {
-    return starterPosts;
+    return { ...defaultState };
   }
 }
 
-function savePosts() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function renderPosts() {
-  if (!postList) {
+function checkAttendance() {
+  const today = getTodayKey();
+
+  if (state.lastAttendanceDate === today) {
     return;
   }
 
-  const query = (searchInput?.value || "").trim().toLowerCase();
-  const filteredPosts = posts.filter((post) => {
-    const matchesCategory =
-      activeCategory === "all" || post.category === activeCategory;
-    const searchableText = `${post.title} ${post.body}`.toLowerCase();
-    return matchesCategory && searchableText.includes(query);
+  state.points += ATTENDANCE_REWARD;
+  state.streak = isYesterday(state.lastAttendanceDate) ? state.streak + 1 : 1;
+  state.lastAttendanceDate = today;
+  saveState();
+  render();
+}
+
+function drawItems(count) {
+  const cost = count === 10 ? DRAW_TEN_COST : DRAW_ONCE_COST;
+
+  if (state.points < cost) {
+    drawMessage.textContent = `포인트가 부족합니다. ${cost}P가 필요해요.`;
+    return;
+  }
+
+  state.points -= cost;
+  const results = Array.from({ length: count }, pickItem);
+
+  results.forEach((item) => {
+    state.owned[item.id] = (state.owned[item.id] || 0) + 1;
   });
 
-  if (filteredPosts.length === 0) {
-    postList.innerHTML =
-      '<div class="empty-state">조건에 맞는 글이 없습니다. 새 글을 남겨보세요.</div>';
+  state.recentResults = results.map((item) => item.id);
+  saveState();
+  animateDraw();
+  render();
+}
+
+function pickItem() {
+  const totalWeight = collectionItems.reduce((sum, item) => sum + item.weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const item of collectionItems) {
+    roll -= item.weight;
+
+    if (roll <= 0) {
+      return item;
+    }
+  }
+
+  return collectionItems[0];
+}
+
+function render() {
+  renderStatus();
+  renderResults();
+  renderCollection();
+}
+
+function renderStatus() {
+  const didAttendToday = state.lastAttendanceDate === getTodayKey();
+
+  if (pointBalance) {
+    pointBalance.textContent = `${state.points.toLocaleString("ko-KR")}P`;
+  }
+
+  if (streakCount) {
+    streakCount.textContent = String(state.streak);
+  }
+
+  if (attendanceMessage) {
+    attendanceMessage.textContent = didAttendToday
+      ? "오늘 출석 보상을 받았습니다."
+      : "오늘 출석 체크로 100P를 받을 수 있어요.";
+  }
+
+  if (attendanceButton) {
+    attendanceButton.disabled = didAttendToday;
+    attendanceButton.textContent = didAttendToday ? "오늘 출석 완료" : "출석 체크";
+  }
+
+  if (drawOnceButton) {
+    drawOnceButton.disabled = state.points < DRAW_ONCE_COST;
+  }
+
+  if (drawTenButton) {
+    drawTenButton.disabled = state.points < DRAW_TEN_COST;
+  }
+
+  if (drawMessage && state.recentResults.length === 0) {
+    drawMessage.textContent = "포인트를 모아 컬렉션 아이템을 획득하세요.";
+  }
+}
+
+function renderResults() {
+  if (!resultList) {
     return;
   }
 
-  postList.innerHTML = filteredPosts.map(createPostMarkup).join("");
+  if (state.recentResults.length === 0) {
+    resultList.innerHTML = "";
+    return;
+  }
+
+  const results = state.recentResults
+    .map((id) => collectionItems.find((item) => item.id === id))
+    .filter(Boolean);
+
+  resultList.innerHTML = results.map(createResultMarkup).join("");
+
+  if (drawMessage) {
+    drawMessage.textContent =
+      results.length === 1
+        ? `${results[0].name}을 획득했습니다.`
+        : `${results.length}개의 아이템을 획득했습니다.`;
+  }
 }
 
-function createPostMarkup(post) {
-  const label = categoryLabels[post.category] || "기타";
-  const date = new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(post.createdAt));
+function renderCollection() {
+  if (!collectionGrid) {
+    return;
+  }
+
+  const ownedCount = collectionItems.filter((item) => state.owned[item.id]).length;
+  const percent = Math.round((ownedCount / collectionItems.length) * 100);
+
+  if (completionText) {
+    completionText.textContent = `${ownedCount} / ${collectionItems.length}`;
+  }
+
+  if (completionBar) {
+    completionBar.style.width = `${percent}%`;
+  }
+
+  collectionGrid.innerHTML = collectionItems.map(createCollectionMarkup).join("");
+}
+
+function createResultMarkup(item) {
+  return `
+    <article class="result-card">
+      <div class="item-meta">
+        <span class="rarity rarity--${item.rarity}">${rarityLabels[item.rarity]}</span>
+      </div>
+      <strong>${item.name}</strong>
+      <span>컬렉션에 추가됨</span>
+    </article>
+  `;
+}
+
+function createCollectionMarkup(item) {
+  const count = state.owned[item.id] || 0;
+  const isLocked = count === 0;
+  const name = isLocked ? "미획득 아이템" : item.name;
+  const countText = isLocked ? "보유 0개" : `보유 ${count}개`;
 
   return `
-    <article class="post-card">
-      <div class="post-card__meta">
-        <span class="badge">${escapeHtml(label)}</span>
-        <time datetime="${escapeHtml(post.createdAt)}">${escapeHtml(date)}</time>
-      </div>
+    <article class="collection-card ${isLocked ? "is-locked" : ""}">
+      <span class="item-symbol">${isLocked ? "?" : item.symbol}</span>
       <div>
-        <h3>${escapeHtml(post.title)}</h3>
-        <p class="post-card__body">${escapeHtml(post.body)}</p>
-      </div>
-      <div class="post-card__actions">
-        <button class="delete-button" type="button" data-delete-id="${escapeHtml(post.id)}">
-          삭제
-        </button>
+        <h3>${name}</h3>
+        <div class="item-meta">
+          <span class="rarity rarity--${item.rarity}">${rarityLabels[item.rarity]}</span>
+          <span class="owned-count">${countText}</span>
+        </div>
       </div>
     </article>
   `;
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function animateDraw() {
+  if (!drawMachine) {
+    return;
+  }
+
+  drawMachine.classList.add("is-spinning");
+  window.setTimeout(() => {
+    drawMachine.classList.remove("is-spinning");
+  }, 750);
+}
+
+function getTodayKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function isYesterday(dateKey) {
+  if (!dateKey) {
+    return false;
+  }
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const yesterdayKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(yesterday);
+
+  return dateKey === yesterdayKey;
 }

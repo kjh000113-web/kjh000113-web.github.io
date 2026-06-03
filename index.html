@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>kjh000113-web | Board</title>
+    <title>kjh000113-web | Collection Draw</title>
     <meta
       name="description"
-      content="kjh000113-web의 개인 게시판형 홈페이지입니다."
+      content="출석 체크로 포인트를 모으고 뽑기로 컬렉션을 완성하는 개인 홈페이지입니다."
     />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -14,125 +14,117 @@
     <header class="site-header">
       <a class="brand" href="#top">kjh000113-web</a>
       <nav class="nav" aria-label="주요 메뉴">
-        <a href="#board">게시판</a>
-        <a href="#write">글쓰기</a>
-        <a href="#profile">소개</a>
+        <a href="#attendance">출석</a>
+        <a href="#draw">뽑기</a>
+        <a href="#collection">컬렉션</a>
       </nav>
     </header>
 
     <main id="top">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero__content">
-          <p class="eyebrow">Personal Board</p>
-          <h1 id="hero-title">기록을 남기는 나만의 게시판</h1>
+          <p class="eyebrow">Point Collection</p>
+          <h1 id="hero-title">출석하고, 뽑고, 컬렉션을 모으기</h1>
           <p class="hero__lead">
-            공지, 일상, 공부 기록, 프로젝트 메모를 한곳에 모아두는 개인
-            홈페이지입니다.
+            매일 출석 체크로 포인트를 받고, 모은 포인트로 아이템을 뽑아 나만의
+            컬렉션을 완성해보세요.
           </p>
           <div class="hero__actions">
-            <a class="button button--primary" href="#write">새 글 쓰기</a>
-            <a class="button button--secondary" href="#board">글 목록 보기</a>
+            <a class="button button--primary" href="#attendance">출석 체크</a>
+            <a class="button button--secondary" href="#draw">뽑기 하기</a>
           </div>
         </div>
       </section>
 
-      <section id="board" class="board-section" aria-labelledby="board-title">
+      <section
+        id="attendance"
+        class="dashboard-section"
+        aria-labelledby="attendance-title"
+      >
         <div class="section-header">
-          <p class="eyebrow">Board</p>
-          <h2 id="board-title">게시글</h2>
+          <p class="eyebrow">Today</p>
+          <h2 id="attendance-title">오늘의 출석</h2>
         </div>
 
-        <div class="board-tools" aria-label="게시글 도구">
-          <label class="search-field">
-            <span>검색</span>
-            <input
-              id="searchInput"
-              type="search"
-              placeholder="제목이나 내용을 검색하세요"
-            />
-          </label>
+        <div class="dashboard-grid">
+          <article class="status-card">
+            <span class="status-card__label">보유 포인트</span>
+            <strong id="pointBalance">0</strong>
+            <p>출석과 뽑기 결과는 이 브라우저에 저장됩니다.</p>
+          </article>
 
-          <div class="category-tabs" aria-label="카테고리 필터">
-            <button class="tab is-active" type="button" data-category="all">
-              전체
+          <article class="status-card">
+            <span class="status-card__label">연속 출석</span>
+            <strong><span id="streakCount">0</span>일</strong>
+            <p id="attendanceMessage">오늘 출석을 기다리고 있어요.</p>
+          </article>
+
+          <article class="attendance-card">
+            <div>
+              <span class="status-card__label">출석 보상</span>
+              <strong>+100P</strong>
+              <p>하루에 한 번 받을 수 있습니다.</p>
+            </div>
+            <button id="attendanceButton" class="button button--primary" type="button">
+              출석 체크
             </button>
-            <button class="tab" type="button" data-category="notice">공지</button>
-            <button class="tab" type="button" data-category="daily">일상</button>
-            <button class="tab" type="button" data-category="study">공부</button>
-            <button class="tab" type="button" data-category="project">
-              프로젝트
-            </button>
-          </div>
+          </article>
         </div>
-
-        <div id="postList" class="post-list" aria-live="polite"></div>
       </section>
 
-      <section id="write" class="write-section" aria-labelledby="write-title">
+      <section id="draw" class="draw-section" aria-labelledby="draw-title">
         <div class="section-header">
-          <p class="eyebrow">Write</p>
-          <h2 id="write-title">글쓰기</h2>
+          <p class="eyebrow">Draw</p>
+          <h2 id="draw-title">포인트 뽑기</h2>
         </div>
 
-        <form id="postForm" class="post-form">
-          <div class="form-grid">
-            <label>
-              <span>제목</span>
-              <input
-                id="titleInput"
-                name="title"
-                type="text"
-                maxlength="60"
-                required
-                placeholder="게시글 제목"
-              />
-            </label>
-
-            <label>
-              <span>분류</span>
-              <select id="categoryInput" name="category">
-                <option value="notice">공지</option>
-                <option value="daily">일상</option>
-                <option value="study">공부</option>
-                <option value="project">프로젝트</option>
-              </select>
-            </label>
+        <div class="draw-panel">
+          <div class="draw-machine" aria-hidden="true">
+            <span class="machine-ring"></span>
+            <span class="machine-core">?</span>
           </div>
 
-          <label>
-            <span>내용</span>
-            <textarea
-              id="bodyInput"
-              name="body"
-              rows="7"
-              maxlength="800"
-              required
-              placeholder="오늘 남기고 싶은 이야기를 적어보세요."
-            ></textarea>
-          </label>
-
-          <div class="form-actions">
-            <p class="save-note">
-              지금 버전은 브라우저에 저장됩니다. GitHub Pages에 올려도 바로
-              사용할 수 있어요.
+          <div class="draw-controls">
+            <div class="price-list">
+              <span>1회 뽑기 30P</span>
+              <span>10회 뽑기 270P</span>
+            </div>
+            <div class="draw-actions">
+              <button id="drawOnceButton" class="button button--primary" type="button">
+                1회 뽑기
+              </button>
+              <button id="drawTenButton" class="button button--secondary" type="button">
+                10회 뽑기
+              </button>
+            </div>
+            <p id="drawMessage" class="draw-message">
+              포인트를 모아 컬렉션 아이템을 획득하세요.
             </p>
-            <button class="button button--primary" type="submit">등록</button>
           </div>
-        </form>
+        </div>
+
+        <div id="resultList" class="result-list" aria-live="polite"></div>
       </section>
 
-      <section id="profile" class="profile-section" aria-labelledby="profile-title">
-        <div class="section-header">
-          <p class="eyebrow">Profile</p>
-          <h2 id="profile-title">소개</h2>
+      <section
+        id="collection"
+        class="collection-section"
+        aria-labelledby="collection-title"
+      >
+        <div class="section-header section-header--split">
+          <div>
+            <p class="eyebrow">Collection</p>
+            <h2 id="collection-title">내 컬렉션</h2>
+          </div>
+          <div class="completion">
+            <span id="completionText">0 / 0</span>
+            <div class="completion-bar" aria-hidden="true">
+              <span id="completionBar"></span>
+            </div>
+          </div>
         </div>
-        <p>
-          이 게시판은 생각과 작업 기록을 차곡차곡 쌓기 위한 개인 공간입니다.
-          내용은 언제든지 수정해서 더 나답게 만들 수 있습니다.
-        </p>
-        <a class="profile-link" href="https://github.com/kjh000113-web">
-          GitHub에서 보기
-        </a>
+
+        <div id="collectionGrid" class="collection-grid"></div>
       </section>
     </main>
 
