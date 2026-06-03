@@ -42,23 +42,11 @@ button {
   min-height: 100vh;
   max-width: 520px;
   margin: 0 auto;
-  padding: 18px 16px 96px;
+  padding: 10px 12px 88px;
 }
 
 .app-shell.is-home-active {
   padding: 0 0 78px;
-}
-
-.app-shell.is-home-active .app-header {
-  display: none;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 6px 0 18px;
 }
 
 .eyebrow {
@@ -93,18 +81,6 @@ h3 {
   font-size: 18px;
 }
 
-.point-pill {
-  display: grid;
-  justify-items: end;
-  min-width: 104px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.point-pill span,
 .panel-label,
 .summary-card span,
 .streak-panel span {
@@ -112,10 +88,6 @@ h3 {
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
-}
-
-.point-pill strong {
-  font-size: 18px;
 }
 
 .tab-view {
@@ -127,14 +99,13 @@ h3 {
 }
 
 .section-title {
-  margin: 12px 0 18px;
+  margin: 4px 0 10px;
 }
 
 .summary-card,
 .attendance-panel,
 .streak-panel,
 .draw-panel,
-.market-note,
 .manage-card,
 .empty-state,
 .result-card,
@@ -299,20 +270,19 @@ h3 {
 
 .attendance-panel {
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .attendance-panel strong {
   display: block;
   margin: 4px 0 8px;
-  font-size: 42px;
+  font-size: 36px;
   line-height: 1;
 }
 
 .attendance-panel p,
 .streak-panel p,
-.market-note p,
 .helper-text,
 .genre-card p {
   margin-bottom: 0;
@@ -324,8 +294,8 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin: 12px 0;
-  padding: 16px;
+  margin: 10px 0;
+  padding: 14px;
 }
 
 .streak-panel strong {
@@ -342,7 +312,7 @@ h3 {
 .day-cell {
   display: grid;
   place-items: center;
-  min-height: 68px;
+  min-height: 58px;
   padding: 8px 4px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -366,12 +336,12 @@ h3 {
 
 .draw-panel {
   display: grid;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 14px;
 }
 
 .draw-machine {
-  aspect-ratio: 1;
+  aspect-ratio: 16 / 10;
   display: grid;
   place-items: center;
   position: relative;
@@ -399,12 +369,12 @@ h3 {
   z-index: 1;
   display: grid;
   place-items: center;
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: var(--primary);
   color: white;
-  font-size: 44px;
+  font-size: 38px;
   font-weight: 900;
 }
 
@@ -418,13 +388,13 @@ h3 {
 .manage-list {
   display: grid;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .genre-card,
 .result-card,
 .manage-card {
-  padding: 16px;
+  padding: 14px;
 }
 
 .genre-card {
@@ -485,7 +455,7 @@ h3 {
 
 .manage-card {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .manage-card__top {
@@ -516,16 +486,6 @@ h3 {
 
 .manage-card__body h3 {
   overflow-wrap: anywhere;
-}
-
-.market-note {
-  margin-bottom: 14px;
-  padding: 16px;
-}
-
-.market-note strong {
-  display: block;
-  margin-bottom: 4px;
 }
 
 .empty-state {
@@ -575,6 +535,6 @@ h3 {
 
 @media (min-width: 720px) {
   .app-shell {
-    padding-top: 28px;
+    padding-top: 12px;
   }
 }
