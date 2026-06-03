@@ -70,14 +70,14 @@
         </section>
 
         <section id="manageView" class="tab-view" data-view="manage">
-          <div class="section-title">
-            <p class="eyebrow">Manage</p>
-            <h2>컬렉션 관리</h2>
-          </div>
-
           <div id="manageList" class="manage-list"></div>
         </section>
       </main>
+
+      <div id="drawOverlay" class="draw-overlay" aria-live="polite" hidden>
+        <div id="drawEffect" class="draw-effect"></div>
+        <article id="drawRevealCard" class="draw-reveal-card"></article>
+      </div>
 
       <nav class="bottom-tabs" aria-label="하단 메뉴">
         <button class="tab-button is-active" type="button" data-target="home">

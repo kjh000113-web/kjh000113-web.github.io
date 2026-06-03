@@ -127,6 +127,8 @@ const drawMessage = document.querySelector("#drawMessage");
 const resultList = document.querySelector("#resultList");
 const manageList = document.querySelector("#manageList");
 const drawMachine = document.querySelector(".draw-machine");
+const drawOverlay = document.querySelector("#drawOverlay");
+const drawRevealCard = document.querySelector("#drawRevealCard");
 const tabButtons = document.querySelectorAll(".tab-button");
 const tabViews = document.querySelectorAll(".tab-view");
 const appShell = document.querySelector(".app-shell");
@@ -135,7 +137,9 @@ let imageCatalog = {};
 let state = loadState();
 let sliderTimer = 0;
 let sliderPointerStart = null;
+let managePointerStart = null;
 let lastInfoToggleAt = 0;
+let lastManageToggleAt = 0;
 normalizeState();
 appShell?.classList.add("is-home-active");
 init();
@@ -143,6 +147,36 @@ init();
 attendanceButton?.addEventListener("click", checkAttendance);
 drawSectionList?.addEventListener("click", handleDrawClick);
 manageList?.addEventListener("click", handleManageClick);
+manageList?.addEventListener("pointerdown", (event) => {
+  rememberManageStart(event.clientX, event.clientY);
+});
+manageList?.addEventListener("pointerup", (event) => {
+  if (event.target.closest("[data-sell-id]")) {
+    managePointerStart = null;
+    return;
+  }
+
+  maybeToggleManageInfo(event.clientX, event.clientY);
+});
+manageList?.addEventListener("touchstart", (event) => {
+  const touch = event.touches[0];
+
+  if (touch) {
+    rememberManageStart(touch.clientX, touch.clientY);
+  }
+}, { passive: true });
+manageList?.addEventListener("touchend", (event) => {
+  if (event.target.closest("[data-sell-id]")) {
+    managePointerStart = null;
+    return;
+  }
+
+  const touch = event.changedTouches[0];
+
+  if (touch) {
+    maybeToggleManageInfo(touch.clientX, touch.clientY);
+  }
+}, { passive: true });
 collectionSlider?.addEventListener("pointerdown", (event) => {
   rememberSliderStart(event.clientX, event.clientY);
 });
@@ -165,6 +199,9 @@ collectionSlider?.addEventListener("touchend", (event) => {
 }, { passive: true });
 collectionSlider?.addEventListener("click", (event) => {
   maybeToggleSliderInfo(event.clientX, event.clientY, true);
+});
+drawOverlay?.addEventListener("click", () => {
+  hideDrawOverlay();
 });
 
 tabButtons.forEach((button) => {
@@ -267,6 +304,7 @@ function switchTab(target) {
   });
 
   appShell?.classList.toggle("is-home-active", target === "home");
+  appShell?.classList.toggle("is-manage-active", target === "manage");
   updateSliderAutoplay();
 }
 
@@ -301,6 +339,32 @@ function maybeToggleSliderInfo(x, y, allowWithoutStart = false) {
 function toggleSliderInfo() {
   lastInfoToggleAt = Date.now();
   collectionSlider?.classList.toggle("is-info-hidden");
+}
+
+function rememberManageStart(x, y) {
+  managePointerStart = { x, y };
+}
+
+function maybeToggleManageInfo(x, y) {
+  const now = Date.now();
+
+  if (now - lastManageToggleAt < 260) {
+    managePointerStart = null;
+    return;
+  }
+
+  if (!managePointerStart) {
+    return;
+  }
+
+  const deltaX = Math.abs(x - managePointerStart.x);
+  const deltaY = Math.abs(y - managePointerStart.y);
+  managePointerStart = null;
+
+  if (deltaX <= 18 && deltaY <= 18) {
+    lastManageToggleAt = now;
+    manageList?.classList.toggle("is-info-hidden");
+  }
 }
 
 function checkAttendance() {
@@ -354,6 +418,7 @@ function drawItems(tierId, count) {
   saveState();
   animateDraw();
   render();
+  showDrawOverlay(results);
 }
 
 function createRandomCollection(tier, images, acquiredDate) {
@@ -437,6 +502,41 @@ function handleManageClick(event) {
   }
 
   sellHolding(button.dataset.sellId);
+}
+
+function showDrawOverlay(results) {
+  if (!drawOverlay || !drawRevealCard || results.length === 0) {
+    return;
+  }
+
+  const bestResult = results
+    .slice()
+    .sort((a, b) => getRarityRank(b.rarity) - getRarityRank(a.rarity))[0];
+
+  drawOverlay.className = `draw-overlay effect-${bestResult.rarity}`;
+  drawRevealCard.innerHTML = `
+    <div class="reveal-image">
+      ${createImageMarkup(bestResult, "item-image")}
+    </div>
+    <div class="reveal-content">
+      <div class="item-meta">
+        ${createRarityMarkup(bestResult.rarity)}
+        <span class="affinity-chip">${bestResult.tierLabel}</span>
+      </div>
+      <h3>${bestResult.name}</h3>
+      <div class="stat-row">
+        <div class="stat-line"><span>세계관</span><strong>${bestResult.worldLabel}</strong></div>
+        <div class="stat-line"><span>직업</span><strong>${bestResult.job || "미정"}</strong></div>
+      </div>
+    </div>
+  `;
+  drawOverlay.hidden = false;
+}
+
+function hideDrawOverlay() {
+  if (drawOverlay) {
+    drawOverlay.hidden = true;
+  }
 }
 
 function render() {
@@ -649,26 +749,25 @@ function createManageMarkup(holding) {
 
   return `
     <article class="manage-card">
-      <div class="manage-card__top">
-        <div class="manage-thumb">${createImageMarkup(holding, "item-image")}</div>
-        <div class="manage-card__body">
+      ${createImageMarkup(holding, "item-image")}
+      <div class="manage-card__content">
+        <div>
           <h3>${holding.name}</h3>
           <div class="item-meta">
             ${createRarityMarkup(holding.rarity)}
             <span class="affinity-chip">호감도 ${affinity}</span>
           </div>
         </div>
+        <div class="stat-row">
+          <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
+          <div class="stat-line"><span>직업</span><strong>${holding.job || "미정"}</strong></div>
+          <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
+          <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
+        </div>
+        <button class="button button--danger" type="button" data-sell-id="${holding.uid}">
+          ${price.toLocaleString("ko-KR")}P에 판매
+        </button>
       </div>
-      <div class="stat-row">
-        <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
-        <div class="stat-line"><span>직업</span><strong>${holding.job || "미정"}</strong></div>
-        <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
-        <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
-        <div class="stat-line"><span>오늘 주가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
-      </div>
-      <button class="button button--danger" type="button" data-sell-id="${holding.uid}">
-        ${price.toLocaleString("ko-KR")}P에 판매
-      </button>
     </article>
   `;
 }
@@ -720,6 +819,15 @@ function findWorld(worldId) {
 
 function findTier(tierId) {
   return drawTiers.find((tier) => tier.id === tierId) || drawTiers[0];
+}
+
+function getRarityRank(rarity) {
+  return {
+    common: 1,
+    rare: 2,
+    epic: 3,
+    legendary: 4,
+  }[rarity] || 1;
 }
 
 function getMarketPrice(holding) {
