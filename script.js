@@ -4,62 +4,30 @@ const DRAW_ONCE_COST = 30;
 const DRAW_TEN_COST = 270;
 const AFFINITY_PER_DAY = 8;
 
-const collectionItems = [
+const drawGenres = [
   {
-    id: "star-shard",
-    name: "별 조각",
-    rarity: "common",
-    symbol: "S",
-    weight: 28,
-    basePrice: 60,
+    id: "fantasy",
+    label: "판타지",
+    description: "마법, 왕국, 성물 이미지",
+    folder: "images/fantasy",
   },
   {
-    id: "moon-ticket",
-    name: "달빛 티켓",
-    rarity: "common",
-    symbol: "M",
-    weight: 24,
-    basePrice: 70,
+    id: "modern",
+    label: "현대",
+    description: "도시, 일상, 현재풍 이미지",
+    folder: "images/modern",
   },
   {
-    id: "green-pin",
-    name: "초록 배지",
-    rarity: "common",
-    symbol: "G",
-    weight: 20,
-    basePrice: 80,
+    id: "wuxia",
+    label: "무협",
+    description: "검, 강호, 동양풍 이미지",
+    folder: "images/wuxia",
   },
   {
-    id: "blue-gem",
-    name: "푸른 보석",
-    rarity: "rare",
-    symbol: "B",
-    weight: 14,
-    basePrice: 150,
-  },
-  {
-    id: "silver-key",
-    name: "은빛 열쇠",
-    rarity: "rare",
-    symbol: "K",
-    weight: 8,
-    basePrice: 210,
-  },
-  {
-    id: "crystal-crown",
-    name: "수정 왕관",
-    rarity: "epic",
-    symbol: "C",
-    weight: 4,
-    basePrice: 430,
-  },
-  {
-    id: "golden-sun",
-    name: "황금 태양",
-    rarity: "legendary",
-    symbol: "L",
-    weight: 2,
-    basePrice: 900,
+    id: "cyberpunk",
+    label: "사이버펑크",
+    description: "네온, 기계, 미래도시 이미지",
+    folder: "images/cyberpunk",
   },
 ];
 
@@ -68,6 +36,32 @@ const rarityLabels = {
   rare: "희귀",
   epic: "에픽",
   legendary: "전설",
+};
+
+const rarityWeights = [
+  { rarity: "common", weight: 70, basePrice: 70 },
+  { rarity: "rare", weight: 20, basePrice: 170 },
+  { rarity: "epic", weight: 8, basePrice: 420 },
+  { rarity: "legendary", weight: 2, basePrice: 900 },
+];
+
+const nameParts = {
+  fantasy: {
+    prefixes: ["신비한", "빛나는", "고대의", "축복받은", "잊혀진"],
+    nouns: ["성배", "마법서", "별의 검", "왕국의 문장", "달빛 로브"],
+  },
+  modern: {
+    prefixes: ["차분한", "선명한", "낯선", "반짝이는", "느린"],
+    nouns: ["거리의 기록", "오후의 창", "도시의 조각", "유리 엽서", "작은 신호"],
+  },
+  wuxia: {
+    prefixes: ["고요한", "비장한", "청명한", "숨겨진", "흐르는"],
+    nouns: ["검의 맹세", "강호의 비급", "매화 부채", "운명의 비녀", "청룡 패"],
+  },
+  cyberpunk: {
+    prefixes: ["네온빛", "과열된", "푸른", "불안정한", "전류 흐르는"],
+    nouns: ["회로 심장", "데이터 칩", "기계 눈", "밤의 터미널", "합성 기억"],
+  },
 };
 
 const defaultState = {
@@ -87,8 +81,7 @@ const streakCount = document.querySelector("#streakCount");
 const attendanceMessage = document.querySelector("#attendanceMessage");
 const attendanceButton = document.querySelector("#attendanceButton");
 const attendanceBoard = document.querySelector("#attendanceBoard");
-const drawOnceButton = document.querySelector("#drawOnceButton");
-const drawTenButton = document.querySelector("#drawTenButton");
+const drawSectionList = document.querySelector("#drawSectionList");
 const drawMessage = document.querySelector("#drawMessage");
 const resultList = document.querySelector("#resultList");
 const manageList = document.querySelector("#manageList");
@@ -96,13 +89,13 @@ const drawMachine = document.querySelector(".draw-machine");
 const tabButtons = document.querySelectorAll(".tab-button");
 const tabViews = document.querySelectorAll(".tab-view");
 
+let imageCatalog = {};
 let state = loadState();
 normalizeState();
-render();
+init();
 
 attendanceButton?.addEventListener("click", checkAttendance);
-drawOnceButton?.addEventListener("click", () => drawItems(1));
-drawTenButton?.addEventListener("click", () => drawItems(10));
+drawSectionList?.addEventListener("click", handleDrawClick);
 manageList?.addEventListener("click", handleManageClick);
 
 tabButtons.forEach((button) => {
@@ -110,6 +103,11 @@ tabButtons.forEach((button) => {
     switchTab(button.dataset.target || "home");
   });
 });
+
+async function init() {
+  imageCatalog = await loadImageCatalog();
+  render();
+}
 
 function loadState() {
   const savedState = localStorage.getItem(STORAGE_KEY);
@@ -143,7 +141,7 @@ function normalizeState() {
   if (state.owned && Object.keys(state.owned).length > 0 && state.holdings.length === 0) {
     Object.entries(state.owned).forEach(([itemId, count]) => {
       for (let index = 0; index < Number(count); index += 1) {
-        addHolding(itemId, state.lastAttendanceDate || getTodayKey());
+        addLegacyHolding(itemId, state.lastAttendanceDate || getTodayKey());
       }
     });
     delete state.owned;
@@ -157,6 +155,21 @@ function normalizeState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+async function loadImageCatalog() {
+  try {
+    const response = await fetch("images.json", { cache: "no-store" });
+
+    if (!response.ok) {
+      return {};
+    }
+
+    const catalog = await response.json();
+    return catalog && typeof catalog === "object" ? catalog : {};
+  } catch {
+    return {};
+  }
 }
 
 function switchTab(target) {
@@ -184,30 +197,65 @@ function checkAttendance() {
   render();
 }
 
-function drawItems(count) {
+function handleDrawClick(event) {
+  const button = event.target.closest("[data-draw-genre]");
+
+  if (!button) {
+    return;
+  }
+
+  drawItems(button.dataset.drawGenre, Number(button.dataset.drawCount));
+}
+
+function drawItems(genreId, count) {
   const cost = count === 10 ? DRAW_TEN_COST : DRAW_ONCE_COST;
+  const images = getImagesForGenre(genreId);
 
   if (state.points < cost) {
     drawMessage.textContent = `포인트가 부족합니다. ${cost}P가 필요해요.`;
     return;
   }
 
-  state.points -= cost;
-  const results = Array.from({ length: count }, pickItem);
-  const today = getTodayKey();
-  const resultHoldings = results.map((item) => addHolding(item.id, today));
+  if (images.length === 0) {
+    drawMessage.textContent = "이 장르에는 아직 등록된 이미지가 없습니다.";
+    return;
+  }
 
-  state.recentResults = resultHoldings.map((holding) => holding.uid);
+  state.points -= cost;
+  const today = getTodayKey();
+  const results = Array.from({ length: count }, () =>
+    createRandomCollection(genreId, images, today),
+  );
+
+  state.holdings.push(...results);
+  state.recentResults = results.map((holding) => holding.uid);
   saveState();
   animateDraw();
   render();
 }
 
-function pickItem() {
-  const totalWeight = collectionItems.reduce((sum, item) => sum + item.weight, 0);
+function createRandomCollection(genreId, images, acquiredDate) {
+  const genre = drawGenres.find((item) => item.id === genreId) || drawGenres[0];
+  const image = images[Math.floor(Math.random() * images.length)];
+  const rarityConfig = pickRarity();
+
+  return {
+    uid: crypto.randomUUID(),
+    genreId: genre.id,
+    genreLabel: genre.label,
+    name: createRandomName(genre.id),
+    rarity: rarityConfig.rarity,
+    image,
+    basePrice: rarityConfig.basePrice + Math.floor(Math.random() * 40),
+    acquiredDate,
+  };
+}
+
+function pickRarity() {
+  const totalWeight = rarityWeights.reduce((sum, item) => sum + item.weight, 0);
   let roll = Math.random() * totalWeight;
 
-  for (const item of collectionItems) {
+  for (const item of rarityWeights) {
     roll -= item.weight;
 
     if (roll <= 0) {
@@ -215,17 +263,28 @@ function pickItem() {
     }
   }
 
-  return collectionItems[0];
+  return rarityWeights[0];
 }
 
-function addHolding(itemId, acquiredDate) {
-  const holding = {
+function createRandomName(genreId) {
+  const parts = nameParts[genreId] || nameParts.fantasy;
+  const prefix = parts.prefixes[Math.floor(Math.random() * parts.prefixes.length)];
+  const noun = parts.nouns[Math.floor(Math.random() * parts.nouns.length)];
+  return `${prefix} ${noun}`;
+}
+
+function addLegacyHolding(itemId, acquiredDate) {
+  const genre = drawGenres[0];
+  state.holdings.push({
     uid: crypto.randomUUID(),
-    itemId,
+    genreId: genre.id,
+    genreLabel: genre.label,
+    name: itemId,
+    rarity: "common",
+    image: "",
+    basePrice: 70,
     acquiredDate,
-  };
-  state.holdings.push(holding);
-  return holding;
+  });
 }
 
 function sellHolding(uid) {
@@ -235,13 +294,7 @@ function sellHolding(uid) {
     return;
   }
 
-  const item = findItem(holding.itemId);
-
-  if (!item) {
-    return;
-  }
-
-  state.points += getMarketPrice(item);
+  state.points += getMarketPrice(holding);
   state.holdings = state.holdings.filter((item) => item.uid !== uid);
   state.recentResults = state.recentResults.filter((id) => id !== uid);
   saveState();
@@ -261,6 +314,7 @@ function handleManageClick(event) {
 function render() {
   renderStatus();
   renderAttendanceBoard();
+  renderDrawSections();
   renderResults();
   renderHome();
   renderManageList();
@@ -268,7 +322,7 @@ function render() {
 
 function renderStatus() {
   const didAttendToday = state.lastAttendanceDate === getTodayKey();
-  const holdings = getHoldingsWithItems();
+  const holdings = getHoldings();
 
   if (pointBalance) {
     pointBalance.textContent = `${state.points.toLocaleString("ko-KR")}P`;
@@ -303,16 +357,8 @@ function renderStatus() {
     attendanceButton.textContent = didAttendToday ? "오늘 출석 완료" : "출석 체크";
   }
 
-  if (drawOnceButton) {
-    drawOnceButton.disabled = state.points < DRAW_ONCE_COST;
-  }
-
-  if (drawTenButton) {
-    drawTenButton.disabled = state.points < DRAW_TEN_COST;
-  }
-
   if (drawMessage && state.recentResults.length === 0) {
-    drawMessage.textContent = "포인트를 모아 컬렉션 아이템을 획득하세요.";
+    drawMessage.textContent = "포인트를 모아 원하는 장르의 컬렉션을 획득하세요.";
   }
 }
 
@@ -345,12 +391,44 @@ function renderAttendanceBoard() {
     .join("");
 }
 
+function renderDrawSections() {
+  if (!drawSectionList) {
+    return;
+  }
+
+  drawSectionList.innerHTML = drawGenres
+    .map((genre) => {
+      const imageCount = getImagesForGenre(genre.id).length;
+      const disabled = imageCount === 0;
+
+      return `
+        <article class="genre-card">
+          <div class="genre-card__top">
+            <div>
+              <h3>${genre.label}</h3>
+              <p>${genre.description} · 이미지 ${imageCount}개</p>
+            </div>
+          </div>
+          <div class="draw-actions">
+            <button class="button button--primary" type="button" data-draw-genre="${genre.id}" data-draw-count="1" ${disabled || state.points < DRAW_ONCE_COST ? "disabled" : ""}>
+              1회 30P
+            </button>
+            <button class="button button--secondary" type="button" data-draw-genre="${genre.id}" data-draw-count="10" ${disabled || state.points < DRAW_TEN_COST ? "disabled" : ""}>
+              10회 270P
+            </button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 function renderHome() {
   if (!collectionSlider) {
     return;
   }
 
-  const holdings = getHoldingsWithItems();
+  const holdings = getHoldings();
 
   if (holdings.length === 0) {
     collectionSlider.innerHTML =
@@ -372,9 +450,7 @@ function renderResults() {
 
   const results = state.recentResults
     .map((uid) => state.holdings.find((holding) => holding.uid === uid))
-    .filter(Boolean)
-    .map((holding) => ({ ...holding, item: findItem(holding.itemId) }))
-    .filter((holding) => holding.item);
+    .filter(Boolean);
 
   if (results.length === 0) {
     resultList.innerHTML = "";
@@ -386,7 +462,7 @@ function renderResults() {
   if (drawMessage) {
     drawMessage.textContent =
       results.length === 1
-        ? `${results[0].item.name}을 획득했습니다.`
+        ? `${results[0].name}을 획득했습니다.`
         : `${results.length}개의 컬렉션을 획득했습니다.`;
   }
 }
@@ -396,7 +472,7 @@ function renderManageList() {
     return;
   }
 
-  const holdings = getHoldingsWithItems();
+  const holdings = getHoldings();
 
   if (holdings.length === 0) {
     manageList.innerHTML =
@@ -406,31 +482,31 @@ function renderManageList() {
 
   manageList.innerHTML = holdings
     .slice()
-    .sort((a, b) => getMarketPrice(b.item) - getMarketPrice(a.item))
+    .sort((a, b) => getMarketPrice(b) - getMarketPrice(a))
     .map(createManageMarkup)
     .join("");
 }
 
 function createSlideMarkup(holding) {
-  const price = getMarketPrice(holding.item);
+  const price = getMarketPrice(holding);
   const affinity = getAffinity(holding);
   const days = getHeldDays(holding.acquiredDate);
 
   return `
     <article class="slide-card">
-      <span class="item-symbol">${holding.item.symbol}</span>
-      <div>
-        <h3>${holding.item.name}</h3>
+      ${createImageMarkup(holding, "item-image")}
+      <div class="slide-card__content">
+        <h3>${holding.name}</h3>
         <div class="item-meta">
-          ${createRarityMarkup(holding.item.rarity)}
+          ${createRarityMarkup(holding.rarity)}
           <span class="price-chip">${price.toLocaleString("ko-KR")}P</span>
           <span class="affinity-chip">호감도 ${affinity}</span>
         </div>
-      </div>
-      <div class="stat-row">
-        <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
-        <div class="stat-line"><span>획득일</span><strong>${formatDate(holding.acquiredDate)}</strong></div>
-        <div class="stat-line"><span>오늘 판매가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
+        <div class="stat-row">
+          <div class="stat-line"><span>장르</span><strong>${holding.genreLabel}</strong></div>
+          <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
+          <div class="stat-line"><span>오늘 판매가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
+        </div>
       </div>
     </article>
   `;
@@ -440,32 +516,33 @@ function createResultMarkup(holding) {
   return `
     <article class="result-card">
       <div class="item-meta">
-        ${createRarityMarkup(holding.item.rarity)}
+        ${createRarityMarkup(holding.rarity)}
       </div>
-      <h3>${holding.item.name}</h3>
-      <p class="helper-text">컬렉션에 추가되었습니다.</p>
+      <h3>${holding.name}</h3>
+      <p class="helper-text">${holding.genreLabel} 컬렉션에 추가되었습니다.</p>
     </article>
   `;
 }
 
 function createManageMarkup(holding) {
-  const price = getMarketPrice(holding.item);
+  const price = getMarketPrice(holding);
   const affinity = getAffinity(holding);
   const days = getHeldDays(holding.acquiredDate);
 
   return `
     <article class="manage-card">
       <div class="manage-card__top">
-        <span class="item-symbol">${holding.item.symbol}</span>
+        <div class="manage-thumb">${createImageMarkup(holding, "item-image")}</div>
         <div class="manage-card__body">
-          <h3>${holding.item.name}</h3>
+          <h3>${holding.name}</h3>
           <div class="item-meta">
-            ${createRarityMarkup(holding.item.rarity)}
+            ${createRarityMarkup(holding.rarity)}
             <span class="affinity-chip">호감도 ${affinity}</span>
           </div>
         </div>
       </div>
       <div class="stat-row">
+        <div class="stat-line"><span>장르</span><strong>${holding.genreLabel}</strong></div>
         <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
         <div class="stat-line"><span>오늘 주가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
       </div>
@@ -480,20 +557,34 @@ function createRarityMarkup(rarity) {
   return `<span class="rarity rarity--${rarity}">${rarityLabels[rarity]}</span>`;
 }
 
-function getHoldingsWithItems() {
-  return state.holdings
-    .map((holding) => ({ ...holding, item: findItem(holding.itemId) }))
-    .filter((holding) => holding.item);
+function createImageMarkup(holding, className) {
+  if (!holding.image) {
+    return `<span class="${className} item-image--placeholder">${holding.name.slice(0, 1)}</span>`;
+  }
+
+  return `<img class="${className}" src="${holding.image}" alt="${holding.name}" loading="lazy" />`;
 }
 
-function findItem(itemId) {
-  return collectionItems.find((item) => item.id === itemId);
+function getHoldings() {
+  return state.holdings.filter((holding) => holding.name);
 }
 
-function getMarketPrice(item) {
-  const seed = hashString(`${getTodayKey()}-${item.id}`);
+function getImagesForGenre(genreId) {
+  const images = imageCatalog[genreId];
+
+  if (!Array.isArray(images)) {
+    return [];
+  }
+
+  return images
+    .map((entry) => (typeof entry === "string" ? entry : entry.src))
+    .filter(Boolean);
+}
+
+function getMarketPrice(holding) {
+  const seed = hashString(`${getTodayKey()}-${holding.uid}-${holding.name}`);
   const swing = 0.72 + (seed % 66) / 100;
-  return Math.max(10, Math.round(item.basePrice * swing));
+  return Math.max(10, Math.round((holding.basePrice || 70) * swing));
 }
 
 function getAffinity(holding) {
@@ -561,14 +652,6 @@ function formatDateKey(date) {
     month: "2-digit",
     day: "2-digit",
   }).format(date);
-}
-
-function formatDate(dateKey) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "short",
-    day: "numeric",
-    timeZone: "Asia/Seoul",
-  }).format(parseKstDate(dateKey));
 }
 
 function hashString(value) {
