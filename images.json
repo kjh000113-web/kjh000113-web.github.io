@@ -1,6 +1,22 @@
 {
-  "fantasy": [],
-  "modern": [],
-  "wuxia": [],
-  "cyberpunk": []
+  "fantasy": [
+    "images/fantasy/1455843.jpg",
+    "images/fantasy/1455844.jpg",
+    "images/fantasy/1455845.jpg"
+  ],
+  "modern": [
+    "images/modern/1272333.jpg",
+    "images/modern/1272337.jpg",
+    "images/modern/1357407.png",
+    "images/modern/1455839.jpg"
+  ],
+  "wuxia": [
+    "images/wuxia/1455849.jpg",
+    "images/wuxia/1455851.jpg",
+    "images/wuxia/1455860.jpg"
+  ],
+  "cyberpunk": [
+    "images/cyberpunk/1455862.jpg",
+    "images/cyberpunk/1455864.jpg"
+  ]
 }

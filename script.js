@@ -1,10 +1,8 @@
 const STORAGE_KEY = "kjh000113-collection-game";
 const ATTENDANCE_REWARD = 100;
-const DRAW_ONCE_COST = 30;
-const DRAW_TEN_COST = 270;
 const AFFINITY_PER_DAY = 8;
 
-const drawGenres = [
+const worlds = [
   {
     id: "fantasy",
     label: "판타지",
@@ -31,6 +29,51 @@ const drawGenres = [
   },
 ];
 
+const drawTiers = [
+  {
+    id: "standard",
+    label: "일반 뽑기",
+    description: "가볍게 시도하는 기본 뽑기",
+    onceCost: 30,
+    tenCost: 270,
+    baseBonus: 0,
+    rarityWeights: [
+      { rarity: "common", weight: 76 },
+      { rarity: "rare", weight: 18 },
+      { rarity: "epic", weight: 5 },
+      { rarity: "legendary", weight: 1 },
+    ],
+  },
+  {
+    id: "premium",
+    label: "고급 뽑기",
+    description: "희귀 이상 기대값이 높은 뽑기",
+    onceCost: 80,
+    tenCost: 720,
+    baseBonus: 80,
+    rarityWeights: [
+      { rarity: "common", weight: 42 },
+      { rarity: "rare", weight: 38 },
+      { rarity: "epic", weight: 16 },
+      { rarity: "legendary", weight: 4 },
+    ],
+  },
+  {
+    id: "transcendent",
+    label: "초월 뽑기",
+    description: "에픽과 전설을 노리는 고가 뽑기",
+    onceCost: 200,
+    tenCost: 1800,
+    baseBonus: 260,
+    rarityWeights: [
+      { rarity: "common", weight: 15 },
+      { rarity: "rare", weight: 35 },
+      { rarity: "epic", weight: 35 },
+      { rarity: "legendary", weight: 15 },
+    ],
+  },
+];
+
 const rarityLabels = {
   common: "일반",
   rare: "희귀",
@@ -38,12 +81,12 @@ const rarityLabels = {
   legendary: "전설",
 };
 
-const rarityWeights = [
-  { rarity: "common", weight: 70, basePrice: 70 },
-  { rarity: "rare", weight: 20, basePrice: 170 },
-  { rarity: "epic", weight: 8, basePrice: 420 },
-  { rarity: "legendary", weight: 2, basePrice: 900 },
-];
+const rarityBasePrices = {
+  common: 70,
+  rare: 170,
+  epic: 420,
+  legendary: 900,
+};
 
 const nameParts = {
   fantasy: {
@@ -147,6 +190,22 @@ function normalizeState() {
     delete state.owned;
   }
 
+  state.holdings = state.holdings.map((holding) => {
+    const worldId = holding.worldId || holding.genreId || "fantasy";
+    const world = findWorld(worldId);
+    const tierId = holding.tierId || "standard";
+    const tier = findTier(tierId);
+
+    return {
+      ...holding,
+      worldId,
+      worldLabel: holding.worldLabel || holding.genreLabel || world.label,
+      tierId,
+      tierLabel: holding.tierLabel || tier.label,
+      basePrice: Number(holding.basePrice) || rarityBasePrices[holding.rarity] || 70,
+    };
+  });
+
   state.points = Number(state.points) || 0;
   state.streak = Number(state.streak) || 0;
   state.attendanceHistory = [...new Set(state.attendanceHistory)].sort();
@@ -198,18 +257,19 @@ function checkAttendance() {
 }
 
 function handleDrawClick(event) {
-  const button = event.target.closest("[data-draw-genre]");
+  const button = event.target.closest("[data-draw-tier]");
 
   if (!button) {
     return;
   }
 
-  drawItems(button.dataset.drawGenre, Number(button.dataset.drawCount));
+  drawItems(button.dataset.drawTier, Number(button.dataset.drawCount));
 }
 
-function drawItems(genreId, count) {
-  const cost = count === 10 ? DRAW_TEN_COST : DRAW_ONCE_COST;
-  const images = getImagesForGenre(genreId);
+function drawItems(tierId, count) {
+  const tier = findTier(tierId);
+  const cost = count === 10 ? tier.tenCost : tier.onceCost;
+  const images = getAllImages();
 
   if (state.points < cost) {
     drawMessage.textContent = `포인트가 부족합니다. ${cost}P가 필요해요.`;
@@ -217,14 +277,14 @@ function drawItems(genreId, count) {
   }
 
   if (images.length === 0) {
-    drawMessage.textContent = "이 장르에는 아직 등록된 이미지가 없습니다.";
+    drawMessage.textContent = "아직 등록된 컬렉션 이미지가 없습니다.";
     return;
   }
 
   state.points -= cost;
   const today = getTodayKey();
   const results = Array.from({ length: count }, () =>
-    createRandomCollection(genreId, images, today),
+    createRandomCollection(tier, images, today),
   );
 
   state.holdings.push(...results);
@@ -234,36 +294,38 @@ function drawItems(genreId, count) {
   render();
 }
 
-function createRandomCollection(genreId, images, acquiredDate) {
-  const genre = drawGenres.find((item) => item.id === genreId) || drawGenres[0];
-  const image = images[Math.floor(Math.random() * images.length)];
-  const rarityConfig = pickRarity();
+function createRandomCollection(tier, images, acquiredDate) {
+  const imageEntry = images[Math.floor(Math.random() * images.length)];
+  const rarity = pickRarity(tier);
+  const basePrice = (rarityBasePrices[rarity] || 70) + tier.baseBonus;
 
   return {
     uid: crypto.randomUUID(),
-    genreId: genre.id,
-    genreLabel: genre.label,
-    name: createRandomName(genre.id),
-    rarity: rarityConfig.rarity,
-    image,
-    basePrice: rarityConfig.basePrice + Math.floor(Math.random() * 40),
+    worldId: imageEntry.worldId,
+    worldLabel: imageEntry.worldLabel,
+    tierId: tier.id,
+    tierLabel: tier.label,
+    name: createRandomName(imageEntry.worldId),
+    rarity,
+    image: imageEntry.src,
+    basePrice: basePrice + Math.floor(Math.random() * 40),
     acquiredDate,
   };
 }
 
-function pickRarity() {
-  const totalWeight = rarityWeights.reduce((sum, item) => sum + item.weight, 0);
+function pickRarity(tier) {
+  const totalWeight = tier.rarityWeights.reduce((sum, item) => sum + item.weight, 0);
   let roll = Math.random() * totalWeight;
 
-  for (const item of rarityWeights) {
+  for (const item of tier.rarityWeights) {
     roll -= item.weight;
 
     if (roll <= 0) {
-      return item;
+      return item.rarity;
     }
   }
 
-  return rarityWeights[0];
+  return "common";
 }
 
 function createRandomName(genreId) {
@@ -274,11 +336,14 @@ function createRandomName(genreId) {
 }
 
 function addLegacyHolding(itemId, acquiredDate) {
-  const genre = drawGenres[0];
+  const world = worlds[0];
+  const tier = drawTiers[0];
   state.holdings.push({
     uid: crypto.randomUUID(),
-    genreId: genre.id,
-    genreLabel: genre.label,
+    worldId: world.id,
+    worldLabel: world.label,
+    tierId: tier.id,
+    tierLabel: tier.label,
     name: itemId,
     rarity: "common",
     image: "",
@@ -358,7 +423,7 @@ function renderStatus() {
   }
 
   if (drawMessage && state.recentResults.length === 0) {
-    drawMessage.textContent = "포인트를 모아 원하는 장르의 컬렉션을 획득하세요.";
+    drawMessage.textContent = "포인트를 모아 원하는 뽑기를 선택하세요.";
   }
 }
 
@@ -396,25 +461,26 @@ function renderDrawSections() {
     return;
   }
 
-  drawSectionList.innerHTML = drawGenres
-    .map((genre) => {
-      const imageCount = getImagesForGenre(genre.id).length;
+  const imageCount = getAllImages().length;
+
+  drawSectionList.innerHTML = drawTiers
+    .map((tier) => {
       const disabled = imageCount === 0;
 
       return `
         <article class="genre-card">
           <div class="genre-card__top">
             <div>
-              <h3>${genre.label}</h3>
-              <p>${genre.description} · 이미지 ${imageCount}개</p>
+              <h3>${tier.label}</h3>
+              <p>${tier.description} · 전체 이미지 ${imageCount}개</p>
             </div>
           </div>
           <div class="draw-actions">
-            <button class="button button--primary" type="button" data-draw-genre="${genre.id}" data-draw-count="1" ${disabled || state.points < DRAW_ONCE_COST ? "disabled" : ""}>
-              1회 30P
+            <button class="button button--primary" type="button" data-draw-tier="${tier.id}" data-draw-count="1" ${disabled || state.points < tier.onceCost ? "disabled" : ""}>
+              1회 ${tier.onceCost}P
             </button>
-            <button class="button button--secondary" type="button" data-draw-genre="${genre.id}" data-draw-count="10" ${disabled || state.points < DRAW_TEN_COST ? "disabled" : ""}>
-              10회 270P
+            <button class="button button--secondary" type="button" data-draw-tier="${tier.id}" data-draw-count="10" ${disabled || state.points < tier.tenCost ? "disabled" : ""}>
+              10회 ${tier.tenCost}P
             </button>
           </div>
         </article>
@@ -503,7 +569,8 @@ function createSlideMarkup(holding) {
           <span class="affinity-chip">호감도 ${affinity}</span>
         </div>
         <div class="stat-row">
-          <div class="stat-line"><span>장르</span><strong>${holding.genreLabel}</strong></div>
+          <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
+          <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
           <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
           <div class="stat-line"><span>오늘 판매가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
         </div>
@@ -519,7 +586,7 @@ function createResultMarkup(holding) {
         ${createRarityMarkup(holding.rarity)}
       </div>
       <h3>${holding.name}</h3>
-      <p class="helper-text">${holding.genreLabel} 컬렉션에 추가되었습니다.</p>
+      <p class="helper-text">${holding.worldLabel} 세계관 컬렉션에 추가되었습니다.</p>
     </article>
   `;
 }
@@ -542,7 +609,8 @@ function createManageMarkup(holding) {
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat-line"><span>장르</span><strong>${holding.genreLabel}</strong></div>
+        <div class="stat-line"><span>세계관</span><strong>${holding.worldLabel}</strong></div>
+        <div class="stat-line"><span>뽑기</span><strong>${holding.tierLabel}</strong></div>
         <div class="stat-line"><span>보유 기간</span><strong>${days}일</strong></div>
         <div class="stat-line"><span>오늘 주가</span><strong>${price.toLocaleString("ko-KR")}P</strong></div>
       </div>
@@ -569,16 +637,31 @@ function getHoldings() {
   return state.holdings.filter((holding) => holding.name);
 }
 
-function getImagesForGenre(genreId) {
-  const images = imageCatalog[genreId];
+function getAllImages() {
+  return worlds.flatMap((world) => {
+    const images = imageCatalog[world.id];
 
-  if (!Array.isArray(images)) {
-    return [];
-  }
+    if (!Array.isArray(images)) {
+      return [];
+    }
 
-  return images
-    .map((entry) => (typeof entry === "string" ? entry : entry.src))
-    .filter(Boolean);
+    return images
+      .map((entry) => (typeof entry === "string" ? entry : entry.src))
+      .filter(Boolean)
+      .map((src) => ({
+        src,
+        worldId: world.id,
+        worldLabel: world.label,
+      }));
+  });
+}
+
+function findWorld(worldId) {
+  return worlds.find((world) => world.id === worldId) || worlds[0];
+}
+
+function findTier(tierId) {
+  return drawTiers.find((tier) => tier.id === tierId) || drawTiers[0];
 }
 
 function getMarketPrice(holding) {
