@@ -134,6 +134,7 @@ const appShell = document.querySelector(".app-shell");
 let imageCatalog = {};
 let state = loadState();
 let sliderTimer = 0;
+let sliderPointerStart = null;
 normalizeState();
 appShell?.classList.add("is-home-active");
 init();
@@ -141,8 +142,24 @@ init();
 attendanceButton?.addEventListener("click", checkAttendance);
 drawSectionList?.addEventListener("click", handleDrawClick);
 manageList?.addEventListener("click", handleManageClick);
-collectionSlider?.addEventListener("click", () => {
-  collectionSlider.classList.toggle("is-info-hidden");
+collectionSlider?.addEventListener("pointerdown", (event) => {
+  sliderPointerStart = {
+    x: event.clientX,
+    y: event.clientY,
+  };
+});
+collectionSlider?.addEventListener("pointerup", (event) => {
+  if (!sliderPointerStart) {
+    return;
+  }
+
+  const deltaX = Math.abs(event.clientX - sliderPointerStart.x);
+  const deltaY = Math.abs(event.clientY - sliderPointerStart.y);
+  sliderPointerStart = null;
+
+  if (deltaX <= 12 && deltaY <= 12) {
+    collectionSlider.classList.toggle("is-info-hidden");
+  }
 });
 
 tabButtons.forEach((button) => {
