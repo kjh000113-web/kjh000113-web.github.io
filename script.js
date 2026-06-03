@@ -135,6 +135,7 @@ let imageCatalog = {};
 let state = loadState();
 let sliderTimer = 0;
 let sliderPointerStart = null;
+let lastInfoToggleAt = 0;
 normalizeState();
 appShell?.classList.add("is-home-active");
 init();
@@ -143,23 +144,27 @@ attendanceButton?.addEventListener("click", checkAttendance);
 drawSectionList?.addEventListener("click", handleDrawClick);
 manageList?.addEventListener("click", handleManageClick);
 collectionSlider?.addEventListener("pointerdown", (event) => {
-  sliderPointerStart = {
-    x: event.clientX,
-    y: event.clientY,
-  };
+  rememberSliderStart(event.clientX, event.clientY);
 });
 collectionSlider?.addEventListener("pointerup", (event) => {
-  if (!sliderPointerStart) {
-    return;
-  }
+  maybeToggleSliderInfo(event.clientX, event.clientY);
+});
+collectionSlider?.addEventListener("touchstart", (event) => {
+  const touch = event.touches[0];
 
-  const deltaX = Math.abs(event.clientX - sliderPointerStart.x);
-  const deltaY = Math.abs(event.clientY - sliderPointerStart.y);
-  sliderPointerStart = null;
-
-  if (deltaX <= 12 && deltaY <= 12) {
-    collectionSlider.classList.toggle("is-info-hidden");
+  if (touch) {
+    rememberSliderStart(touch.clientX, touch.clientY);
   }
+}, { passive: true });
+collectionSlider?.addEventListener("touchend", (event) => {
+  const touch = event.changedTouches[0];
+
+  if (touch) {
+    maybeToggleSliderInfo(touch.clientX, touch.clientY);
+  }
+}, { passive: true });
+collectionSlider?.addEventListener("click", (event) => {
+  maybeToggleSliderInfo(event.clientX, event.clientY, true);
 });
 
 tabButtons.forEach((button) => {
@@ -263,6 +268,39 @@ function switchTab(target) {
 
   appShell?.classList.toggle("is-home-active", target === "home");
   updateSliderAutoplay();
+}
+
+function rememberSliderStart(x, y) {
+  sliderPointerStart = { x, y };
+}
+
+function maybeToggleSliderInfo(x, y, allowWithoutStart = false) {
+  const now = Date.now();
+
+  if (now - lastInfoToggleAt < 260) {
+    sliderPointerStart = null;
+    return;
+  }
+
+  if (!sliderPointerStart) {
+    if (allowWithoutStart) {
+      toggleSliderInfo();
+    }
+    return;
+  }
+
+  const deltaX = Math.abs(x - sliderPointerStart.x);
+  const deltaY = Math.abs(y - sliderPointerStart.y);
+  sliderPointerStart = null;
+
+  if (deltaX <= 18 && deltaY <= 18) {
+    toggleSliderInfo();
+  }
+}
+
+function toggleSliderInfo() {
+  lastInfoToggleAt = Date.now();
+  collectionSlider?.classList.toggle("is-info-hidden");
 }
 
 function checkAttendance() {

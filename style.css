@@ -154,6 +154,9 @@ h3 {
   border-radius: 0;
   background: #e6e8e4;
   box-shadow: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .item-image {
@@ -163,6 +166,7 @@ h3 {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  pointer-events: none;
 }
 
 .item-image--placeholder {
@@ -189,6 +193,7 @@ h3 {
   transition:
     opacity 0.2s ease,
     transform 0.2s ease;
+  pointer-events: none;
 }
 
 .collection-slider.is-info-hidden .slide-card__content {
